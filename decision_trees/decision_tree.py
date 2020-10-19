@@ -65,7 +65,7 @@ def visualize_split(x, col_name, thresh, tgt_classes, axis):
     axis.legend(tgt_classes)
     axis.axline((thresh,tgt_classes[0]), (thresh,tgt_classes[1]))
     
-def visualize_tree_working(x, root, levels):
+def visualize_tree_working(x, root, levels, save=None):
 
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
@@ -76,11 +76,18 @@ def visualize_tree_working(x, root, levels):
 
     fig, ax = plt.subplots(levels+1, max_width)
 
-    curr_nodes = [(root, 0, 1, x)]
-    all_nodes  = [(root, 0, 1, x)]
+    curr_nodes = [(root, int(max_width/2), 1, x)]
+    all_nodes  = [(root, int(max_width/2), 1, x)]
     curr_mult  = max_width/2
 
-    visualize_split(x, root.col, root.thresh, tgt_classes, ax[0][0])
+    for i in ax:
+        for j in i:
+            j.axis('off')
+
+    ax[0][int(max_width/2)].clear()
+    ax[0][int(max_width/2)].axis('on')
+    ax[0][int(max_width/2)].set_title(root.col)
+    visualize_split(x, root.col, root.thresh, tgt_classes, ax[0][int(max_width/2)])
 
     for i in range(levels + 1):
         curr_level = i+1
@@ -89,8 +96,27 @@ def visualize_tree_working(x, root, levels):
         for n, x_pos, y_pos, data in curr_nodes:
             upper_data, lower_data = n.split(data)
             upper_node, lower_node = n.upper, n.lower
-            upper_x, lower_x = int(x_pos + curr_mult), int(x_pos)          
+            upper_x, lower_x = int(x_pos + curr_mult/2), int(x_pos - curr_mult/2)          
             upper_ax, lower_ax = ax[curr_level][upper_x], ax[curr_level][lower_x]
+
+            upper_ax.clear()
+            lower_ax.clear()
+            upper_ax.axis('on')
+            lower_ax.axis('on')
+
+            if(curr_level != levels):
+                ax[curr_level-1][upper_x].plot(100*np.ones(50), range(-50,0), 'b')
+                ax[curr_level-1][upper_x].set_ylim(-50,50)
+                ax[curr_level-1][upper_x].set_xlim(0,200)
+                for j in range(x_pos+1, upper_x+1):
+                    ax[curr_level-1][j].plot(range(100),np.zeros(100), 'b')
+                
+            ax[curr_level-1][lower_x].plot(np.zeros(50), range(-50,0), 'b')
+            ax[curr_level-1][lower_x].set_ylim(-50,50)
+            ax[curr_level-1][lower_x].set_xlim(-100,100)
+            for j in range(lower_x, x_pos):
+                ax[curr_level-1][j].plot(range(100),np.zeros(100), 'b')
+                
 
             if(lower_node.leaf):
                 lower_ax.fill((0,0.5,1),(0,0.5,0), color=colors[int(lower_node.state)])
@@ -111,6 +137,10 @@ def visualize_tree_working(x, root, levels):
         curr_nodes = next_nodes
     fig.set_size_inches(2.5 * max_width, 2 * (levels+1))
     fig.show()
+    
+    if(save != None):
+        print(" Saving output as %s"%save)
+        fig.savefig(save)
 
 def find_best_split(x):
     inputs = x.drop('target', axis=1)

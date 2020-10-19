@@ -84,6 +84,9 @@ Common settings - 5 level tree, 10% of dataset taken as test set
 |Breast cancer|569 x 30|121.020|89.29%|98.83%|
 |Wine|178 x 13|11.220|88.24%|98.76%|
 
+Decision tree learned for iris dataset :
+![iris decision tree](./Images/iris_decisiontree.png)
+
 ## Observations
 
 - Does not work well in all situations.
