@@ -77,12 +77,18 @@ For classification, the root node is passed the input, and depending on its para
 
 Common settings - 5 level tree, 10% of dataset taken as test set
 
-|Dataset|size|Training time(s)|Test set acc|Train set acc|
+|Dataset|size (samples x features)|Training time(s)|Test set accuracy|Train set accurracy|
 |---|---|---|---|---|
 |Digits|1797 x 64|68.624|63.13%|69.41%|
 |Iris|150 x 4|0.659|100%|97.04%|
 |Breast cancer|569 x 30|121.020|89.29%|98.83%|
-|Digits|178 x 13|11.220|88.24%|98.76%|
+|Wine|178 x 13|11.220|88.24%|98.76%|
+
+## Observations
+
+- Does not work well in all situations.
+- Easy to interpret and fast to predict.
+- High variance (overfitting)
 
 ## Things to improve (in my implementation)
 
