@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 def gini(x, col_name=None, thresh_val=None, debug=False):
     tgt_types = x['target'].unique()
@@ -43,11 +44,73 @@ def gini(x, col_name=None, thresh_val=None, debug=False):
         
     return impurity
 
+
 def split_data(x, col_name, thresh):
     upper = x.loc[x[col_name] > thresh].drop(col_name, axis=1)
     lower = x.loc[x[col_name] <= thresh].drop(col_name, axis=1)
 
     return (upper, lower)
+
+
+def visualize_split(x, col_name, thresh, tgt_classes, axis):
+
+    data_target_sorted = {}
+    for i in tgt_classes:
+        data_target_sorted[i] = x.loc[x['target'] == i]
+
+    for j in tgt_classes:
+        data_target_j = data_target_sorted[j]
+        axis.scatter(data_target_j[col_name], data_target_j['target'])
+    
+    axis.legend(tgt_classes)
+    axis.axline((thresh,tgt_classes[0]), (thresh,tgt_classes[1]))
+    
+def visualize_tree_working(x, root, levels):
+
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    colors = prop_cycle.by_key()['color']
+    
+    max_width = 2**(levels)
+
+    tgt_classes = x['target'].unique()
+
+    fig, ax = plt.subplots(levels+1, max_width)
+
+    curr_nodes = [(root, 0, 1, x)]
+    all_nodes  = [(root, 0, 1, x)]
+    curr_mult  = max_width/2
+
+    visualize_split(x, root.col, root.thresh, tgt_classes, ax[0][0])
+
+    for i in range(levels + 1):
+        curr_level = i+1
+        next_nodes = []
+        
+        for n, x_pos, y_pos, data in curr_nodes:
+            upper_data, lower_data = n.split(data)
+            upper_node, lower_node = n.upper, n.lower
+            upper_x, lower_x = int(x_pos + curr_mult), int(x_pos)          
+            upper_ax, lower_ax = ax[curr_level][upper_x], ax[curr_level][lower_x]
+
+            if(lower_node.leaf):
+                lower_ax.fill((0,0.5,1),(0,0.5,0), color=colors[int(lower_node.state)])
+            else:
+                next_nodes.append((lower_node, lower_x, curr_level, lower_data))
+                lower_ax.set_title(lower_node.col)
+                visualize_split(lower_data, lower_node.col, lower_node.thresh, tgt_classes, lower_ax)
+
+            if(upper_node.leaf):
+                upper_ax.fill((0,0.5,1),(0,0.5,0), color=colors[int(upper_node.state)])
+            else:
+                next_nodes.append((upper_node, upper_x, curr_level, upper_data))
+                upper_ax.set_title(upper_node.col)
+                visualize_split(upper_data, upper_node.col, upper_node.thresh, tgt_classes, upper_ax)
+                
+        
+        curr_mult = curr_mult/2
+        curr_nodes = next_nodes
+    fig.set_size_inches(2.5 * max_width, 2 * (levels+1))
+    fig.show()
 
 def find_best_split(x):
     inputs = x.drop('target', axis=1)
