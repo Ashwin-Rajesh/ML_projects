@@ -69,7 +69,25 @@ I have implemented decision trees using a class, called DecisionNode. Each objec
 
 ## How to build a decision tree?
 
-Using my class, a tree can be build using recursive breadth-first search. First, a root node is created. This node must be saved for clasification. Then, it is trained on the full dataset. After training, its children are initialised and the dataset is split into upper and lower halves (by passing through the decision criteria). Then, the upper child node goes through the same process, training and making its own child nodes, but with only the upper dataset, and the lower child node goes through a similar process. This terminates when either training results in a leaf node, or a set maximum limit criteria was reached.
+Using my class, a tree can be build using recursive depth-first search. First, a root node is created. This node must be saved for clasification. Then, it is trained on the full dataset. After training, its children are initialised and the dataset is split into upper and lower halves (by passing through the decision criteria). Then, the upper child node goes through the same process, training and making its own child nodes, but with only the upper dataset, and the lower child node goes through a similar process. This terminates when either training results in a leaf node, or a set maximum limit criteria was reached.
+
+For classification, the root node is passed the input, and depending on its parameters, it passes it to one of its children. When a leaf node is reached, it returns its state and this is returned all the way back to the initial call from the root node, in the same path that was followed down. So, the classify function of the root node returns the required classification value.
+
+## Performance
+
+Common settings - 5 level tree, 10% of dataset taken as test set
+
+|Dataset|size|Training time(s)|Test set acc|Train set acc|
+|---|---|---|---|---|
+|Digits|1797 x 64|68.624|63.13%|69.41%|
+|Iris|150 x 4|0.659|100%|97.04%|
+|Breast cancer|569 x 30|121.020|89.29%|98.83%|
+|Digits|178 x 13|11.220|88.24%|98.76%|
+
+## Things to improve (in my implementation)
+
+1. Very easy to make a faulty tree. The responsibility of initialising the upper and lower child node links is upto the user. Even worse, the buggy tree will not cause problems unless that specific branch is triggered during classification. This is a critical flaw and must be addressed in the future.
+2. Very, very slow for large datasets(large number of rows or columns). Can be fixed by checking for best fit by iterating threshold at a larger interval (now, best fit iterates through the mid-point of all adjacent values in all the columns of the dataset, which is not necessary)
 
 ## References
 
