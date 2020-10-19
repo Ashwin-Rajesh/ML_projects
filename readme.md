@@ -1,6 +1,11 @@
 # Machine Learning
 
-Documents various small projects using simple old machine learning algorithms (no neural nets or deep learning), to solve regression and classification problems.
+Documents various small projects using plain old machine learning algorithms (no fancy deep learning studd), to solve regression and classification problems.
+
+# Index
+
+1. [Decision trees](./decision_trees/readme.md)
+2. [Random forest](./random_forest/readme.md)
 
 
 # Tools used
