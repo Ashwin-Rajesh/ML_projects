@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.core.defchararray import replace
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -45,11 +46,14 @@ def gini(x, col_name=None, thresh_val=None, debug=False):
     return impurity
 
 
-def split_data(x, col_name, thresh):
-    upper = x.loc[x[col_name] > thresh].drop(col_name, axis=1)
-    lower = x.loc[x[col_name] <= thresh].drop(col_name, axis=1)
+def split_data(x, col_name, thresh, drop=False):
+    upper = x.loc[x[col_name] > thresh]
+    lower = x.loc[x[col_name] <= thresh]
 
-    return (upper, lower)
+    if drop:
+        return (upper.drop(col_name, axis='columns'), lower.drop(col_name, axis='columns'))
+    else:
+        return (upper, lower)
 
 
 def visualize_split(x, col_name, thresh, tgt_classes, axis):
@@ -64,7 +68,8 @@ def visualize_split(x, col_name, thresh, tgt_classes, axis):
     
     axis.legend(tgt_classes)
     axis.axline((thresh,tgt_classes[0]), (thresh,tgt_classes[1]))
-    
+
+# Visualize tree using pyploy
 def visualize_tree_working(x, root, levels, save=None):
 
     prop_cycle = plt.rcParams['axes.prop_cycle']
@@ -132,9 +137,9 @@ def visualize_tree_working(x, root, levels, save=None):
                 upper_ax.set_title(upper_node.col)
                 visualize_split(upper_data, upper_node.col, upper_node.thresh, tgt_classes, upper_ax)
                 
-        
         curr_mult = curr_mult/2
         curr_nodes = next_nodes
+
     fig.set_size_inches(2.5 * max_width, 2 * (levels+1))
     fig.show()
     
@@ -142,7 +147,7 @@ def visualize_tree_working(x, root, levels, save=None):
         print(" Saving output as %s"%save)
         fig.savefig(save)
 
-def find_best_split(x):
+def find_best_split(x, max_tries):
     inputs = x.drop('target', axis=1)
     outputs = x['target']
     
@@ -153,7 +158,11 @@ def find_best_split(x):
     for col_name in inputs.columns:
 
         values = x.sort_values(col_name)[col_name].unique()
-        thresholds = [(values[i]+values[i+1])/2 for i in range(values.shape[0]-1)]
+        thresholds = np.asarray([(values[i]+values[i+1])/2 for i in range(values.shape[0]-1)])
+        
+        if(max_tries != None):
+            if(len(thresholds) >= max_tries):
+                thresholds = np.random.choice(thresholds, max_tries, replace=False)
 
         for i in thresholds:
             impurity = gini(x, col_name, i, False)
@@ -209,9 +218,9 @@ class DecisionNode():
     # Train with data (set column and threshold).
     # If the gini impurity has deteriorated or has not improved, then the node is made into a leaf node.
     # force_decision can be set to True to disable automatic conversion to leaf nodes
-    def train(self, x, force_decision=False):
+    def train(self, x, force_decision=False, max_tries=None):
         data_impurity = gini(x)
-        impurity, self.col, self.thresh = find_best_split(x)
+        impurity, self.col, self.thresh = find_best_split(x, max_tries)
 
         if(self.debug):
             print(" %15s : Trained. Impurity before : %.2f, Impurity : %.2f, Column : '%s', Threshold : %.2f" % (self.name, data_impurity, impurity, self.col, self.thresh))
@@ -222,7 +231,7 @@ class DecisionNode():
             self.thresh = None
 
     # Split the data into two, if its not a leaf node
-    def split(self, x):
+    def split(self, x, drop=False):
         if(self.leaf):
             if(self.debug):
                 print(" %15s : Cant split, is a leaf node."%self.name)
@@ -231,7 +240,7 @@ class DecisionNode():
         if(self.debug):
             print(" %15s : Splitting input..."%self.name)
         
-        return split_data(x, self.col, self.thresh)
+        return split_data(x, self.col, self.thresh, drop)
     
     # Attach the upper child node
     def attach_upper(self, upper_node):
@@ -309,7 +318,7 @@ class DecisionNode():
                 self.lower.set_debug(debug, True)
 
 # Recurseive depth-first search, while building the tree
-def build_tree(data, level, node=None, debug=False):
+def build_tree(data, level, node=None, debug=False, drop=False, max_tries=None, min_data=None):
     # If at the last level, make the node a leaf node
     if(level == 0):
         leaf_out = data.mode()['target'][0]
@@ -321,7 +330,11 @@ def build_tree(data, level, node=None, debug=False):
         node = DecisionNode(None, name='root', debug=debug)
     
     # Train the node
-    node.train(data)
+    if(min_data == None or data.shape[0] >= min_data):
+        node.train(data, max_tries=max_tries)
+    else:
+        leaf_out = data.mode()['target'][0]
+        node.make_leaf(leaf_out)
     
     # If the node decided to be a leaf node, stop building further
     if(node.leaf):
@@ -329,12 +342,12 @@ def build_tree(data, level, node=None, debug=False):
 
     # Else, make child nodes, and split the dataset between these nodes
     node.make_children()
-    upper_ds, lower_ds = node.split(data)
+    upper_ds, lower_ds = node.split(data, drop)
     
     # Build the tree down from these nodes, using the split dataset.
     # Note : Its a depth-first search because the upper node is called first, and only after
     #   its tree has been built, is the lower node called
-    build_tree(upper_ds, level-1, node.upper)
-    build_tree(lower_ds, level-1, node.lower)
+    build_tree(upper_ds, level-1, node.upper, debug=debug, drop=drop, max_tries=max_tries, min_data=min_data)
+    build_tree(lower_ds, level-1, node.lower, debug=debug, drop=drop, max_tries=max_tries, min_data=min_data)
 
     return node

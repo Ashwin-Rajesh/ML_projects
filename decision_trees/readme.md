@@ -26,7 +26,9 @@ If the gini impurity after splitting does not improve from the original dataset,
 
 ![Decision tree ](../Documents/Images/decision-tree.png)
 
-## My class
+---
+
+## Version 1 implementation
 
 I have implemented decision trees using a class, called DecisionNode. Each object represents a single node. The advantage is being able to finely control each and every node of the decision tree. It also has a basic debug feature that prints information about the training process. The interface is as follows :
 
@@ -67,13 +69,13 @@ I have implemented decision trees using a class, called DecisionNode. Each objec
     - Sets debug to state
     - If propagate is true, calls set_debug with the same state of child nodes. This makes changing debug property of entire tree or a subtree effortless.
 
-## How to build a decision tree?
+### How to build a decision tree?
 
 Using my class, a tree can be build using recursive depth-first search. First, a root node is created. This node must be saved for clasification. Then, it is trained on the full dataset. After training, its children are initialised and the dataset is split into upper and lower halves (by passing through the decision criteria). Then, the upper child node goes through the same process, training and making its own child nodes, but with only the upper dataset, and the lower child node goes through a similar process. This terminates when either training results in a leaf node, or a set maximum limit criteria was reached.
 
 For classification, the root node is passed the input, and depending on its parameters, it passes it to one of its children. When a leaf node is reached, it returns its state and this is returned all the way back to the initial call from the root node, in the same path that was followed down. So, the classify function of the root node returns the required classification value.
 
-## Performance
+### Performance
 
 Common settings - 5 level tree, 10% of dataset taken as test set
 
@@ -84,19 +86,55 @@ Common settings - 5 level tree, 10% of dataset taken as test set
 |Breast cancer|569 x 30|121.020|89.29%|98.83%|
 |Wine|178 x 13|11.220|88.24%|98.76%|
 
-Decision tree learned for iris dataset :
+[Decision tree learned for iris dataset](./Images/iris_decisiontree.png) :
 ![iris decision tree](./Images/iris_decisiontree.png)
+[Decision tree learned for breast cancer dataset](./Images/breast_cancer_decisiontree.jpeg) :
+![breast cancer tree](./Images/breast_cancer_decisiontree.jpeg)
 
-## Observations
+### Observations
 
 - Does not work well in all situations.
 - Easy to interpret and fast to predict.
 - High variance (overfitting)
 
-## Things to improve (in my implementation)
+---
 
-1. Very easy to make a faulty tree. The responsibility of initialising the upper and lower child node links is upto the user. Even worse, the buggy tree will not cause problems unless that specific branch is triggered during classification. This is a critical flaw and must be addressed in the future.
-2. Very, very slow for large datasets(large number of rows or columns). Can be fixed by checking for best fit by iterating threshold at a larger interval (now, best fit iterates through the mid-point of all adjacent values in all the columns of the dataset, which is not necessary)
+## Version 2
+
+1. In earlier implementation, the training process will involve trial and error for finding the threshold, and will check for all posible gaps between input values in the data. This is very time consuming, and often wasteful. A maximum threshold try limit was added. If there are more thresholds found, random sampling without replacement is used. This slightly reduces overfitting too.
+
+2. Added a minimum data condition. If the data given to a tree is lower than a limit, the node is turned into a leaf node. This reduces overfitting.
+
+3. Stopped dropping a column once it was used earlier in a decision tree.
+
+### Performance
+
+Common settings
+
+- 5 level tree
+- 10% of dataset taken as test set
+- Maximum threshold tries : 10%
+- Minimum data : 20
+
+|Dataset|size (samples x features)|Training time(s)|Test set accuracy|Train set accurracy|
+|---|---|---|---|---|
+|Digits|1797 x 64|61.309|65.92%|70.40%|
+|Iris|150 x 4|0.748|100%|97.78%|
+|Breast cancer|569 x 30|8.805|96.43%|97.08%|
+|Wine|178 x 13|2.985|94.12%|97.52%|
+
+[Decision tree learned for iris dataset](./Images/iris_decisiontree_v2.jpeg) :
+![iris decision tree](./Images/iris_decisiontree_v2.jpeg)
+[Decision tree learned for breast cancer dataset](./Images/breast_cancer_decisiontree_v2.jpeg) :
+![breast cancer tree](./Images/breast_cancer_decisiontree_v2.jpeg)
+
+### Observations
+
+- Much faster training (except digits)
+- Better generalisation
+- Still bad performance with unstructured data (like digits)
+
+---
 
 ## References
 
