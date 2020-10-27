@@ -318,7 +318,7 @@ class DecisionNode():
                 self.lower.set_debug(debug, True)
 
 # Recurseive depth-first search, while building the tree
-def build_tree(data, level, node=None, debug=False, drop=False, max_tries=None, min_data=None):
+def build_tree(data, level, node=None, debug=False, drop=False, max_tries=None, min_data=None, root_name='root', ):
     # If at the last level, make the node a leaf node
     if(level == 0):
         leaf_out = data.mode()['target'][0]
@@ -327,7 +327,7 @@ def build_tree(data, level, node=None, debug=False, drop=False, max_tries=None, 
     
     # If no parent node is passed, create a new node, called the 'root' node.
     if(node == None):
-        node = DecisionNode(None, name='root', debug=debug)
+        node = DecisionNode(None, name=root_name, debug=debug)
     
     # Train the node
     if(min_data == None or data.shape[0] >= min_data):
